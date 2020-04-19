@@ -11,3 +11,6 @@ SyslogIdentifier=urbanocto
 TimeoutStopSec=10
 Restart=always
 RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
