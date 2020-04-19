@@ -53,9 +53,8 @@ def main(config):
      
 
 if __name__ == "__main__":
-    if len(sys.argv) < 2:
-        print(f"Usage: {sys.argv[0]} {{CONFIG_PATH}}")
-        sys.exit(1)
-    with open(sys.argv[1], 'rb') as f:
+    path  = "./"
+    config_file = path + 'config.yml'
+    with open(config_file, 'rb') as f:
         config = yaml.safe_load(f)
     main(config)

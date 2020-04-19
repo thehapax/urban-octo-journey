@@ -1,0 +1,13 @@
+[Unit]
+Description=CryptoEconFeed Bot
+After=network.target
+
+[Service]
+WorkingDirectory=/root/urban-octo-journey/
+ExecStart=/usr/bin/python3 feed-aggregator.py
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=urbanocto
+TimeoutStopSec=10
+Restart=always
+RestartSec=5
