@@ -47,7 +47,7 @@ def main(config):
     # listen and send messsages
     @client.on(events.NewMessage(chats=inbound_groups))
     async def handler(event):
-        inbound_message = event.message.raw_text
+        inbound_message = event.message.text
         await client.send_message(outbound, inbound_message, parse_mode='html')
 
     client.run_until_disconnected()
