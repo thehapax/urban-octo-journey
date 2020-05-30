@@ -34,6 +34,7 @@ def main(config):
     ##### single outbound stream ######
     outbound = config['outbound']
     print(f'Outbound Feed: {outbound}')
+    client.parse_mode = 'html'
     client.start()
 
     # Getting information about yourself
@@ -47,7 +48,7 @@ def main(config):
     @client.on(events.NewMessage(chats=inbound_groups))
     async def handler(event):
         inbound_message = event.message.raw_text
-        await client.send_message(outbound, inbound_message)
+        await client.send_message(outbound, inbound_message, parse_mode='html')
 
     client.run_until_disconnected()
      
