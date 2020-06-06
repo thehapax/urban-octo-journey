@@ -2,6 +2,7 @@ from telethon import TelegramClient, events, sync, utils, functions
 import yaml
 import sys
 import logging
+from utils import split_sponsored
 
 ### this script will consolidate multiple channels to one channel/group/user on telgram
 # source code examples from https://docs.telethon.dev/en/latest/basic/quick-start.html
@@ -42,12 +43,17 @@ def main(config):
     # print(me.stringify())
     # username = me.username
     # print(username)
-    # get_ids(client)
+    # get_ids(client)  # prints out all IDs of chats and channels user is in.
     
     # listen and send messsages
     @client.on(events.NewMessage(chats=inbound_groups))
     async def handler(event):
-        inbound_message = event.message.text
+        sender = await event.get_sender()
+        username = sender.username
+        inbound_message = "<b>" +  username + "</b>\n\n"
+        body_msg = split_sponsored(event.message.text) # remove sponsored msg
+        inbound_message = inbound_message + body_msg
+#        print(inbound_message)
         await client.send_message(outbound, inbound_message, parse_mode='html')
 
     client.run_until_disconnected()
