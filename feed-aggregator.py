@@ -24,14 +24,17 @@ def get_inbound(config):
 
 def get_name(sender):
     name = ""
-    first_name = sender.first_name
-    last_name = sender.last_name
-    if first_name is not None:
-        name = first_name
-        if last_name is not None:
-            name = name + "  " + last_name
-    elif last_name is not None:
-        name = last_name
+    try:
+        first_name = sender.first_name
+        last_name = sender.last_name
+        if first_name is not None:
+            name = first_name
+            if last_name is not None:
+                name = name + "  " + last_name
+        elif last_name is not None:
+            name = last_name
+    except Exception as e:
+        logger.error(e)
     return name
     
 
@@ -61,18 +64,27 @@ def main(config):
     # listen and send messsages
     @client.on(events.NewMessage(chats=inbound_groups))
     async def handler(event):
-        sender = await event.get_sender()
-        username = sender.username
+        try:
+            sender = await event.get_sender()
+            username = sender.username
 
-        name = get_name(sender)
-        inbound = "<b>" + name + "</b>\n\n"
-        logger.info(inbound)
+            name = get_name(sender)
+            inbound = "<b>" + name + "</b>\n\n"
+            logger.info(inbound)
 
-        inbound_message = "<b>" +  username + "</b>\n\n"
-        body_msg = split_sponsored(event.message.text) # remove sponsored msg
-        inbound_message = inbound_message + body_msg
-        await client.send_message(outbound, inbound_message, parse_mode='html')
-
+            inbound_message = "<b>" +  username + "</b>\n\n"
+            body_msg = split_sponsored(event.message.text) # remove sponsored msg
+            inbound_message = inbound_message + body_msg
+            if body_msg is not None:
+                await client.send_message(outbound, inbound_message, parse_mode='html')
+            
+            if event.message.media is not None:
+                # don't announce source, just forward the media
+                await client.send_file(outbound, event.message.media, force_document=True)
+        except Exception as e: 
+            logger.error(e)
+        
+        
     client.run_until_disconnected()
      
 
