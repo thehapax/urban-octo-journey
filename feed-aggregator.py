@@ -22,6 +22,19 @@ def get_inbound(config):
     return inbounds
 
 
+def get_name(sender):
+    name = ""
+    first_name = sender.first_name
+    last_name = sender.last_name
+    if first_name is not None:
+        name = first_name
+        if last_name is not None:
+            name = name + "  " + last_name
+    elif last_name is not None:
+        name = last_name
+    return name
+    
+
 def main(config):
     # We have to manually call "start" if we want an explicit bot token
     # with actual user account - octocubic
@@ -50,10 +63,14 @@ def main(config):
     async def handler(event):
         sender = await event.get_sender()
         username = sender.username
+
+        name = get_name(sender)
+        inbound = "<b>" + name + "</b>\n\n"
+        logger.info(inbound)
+
         inbound_message = "<b>" +  username + "</b>\n\n"
         body_msg = split_sponsored(event.message.text) # remove sponsored msg
         inbound_message = inbound_message + body_msg
-#        print(inbound_message)
         await client.send_message(outbound, inbound_message, parse_mode='html')
 
     client.run_until_disconnected()
