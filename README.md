@@ -1,5 +1,5 @@
-# Cloned repo of forwardgram
-Forward messages from multiple Telegram channels or chats to one (or more) chat or channel of your own!
+# telegram forwarder
+forward messages from multiple Telegram channels or chats to one (or more) chat or channel of your own!
 
 ## Prerequisites
 - Python 3.6+
