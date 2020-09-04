@@ -40,7 +40,7 @@ def get_name(sender):
 
 def main(config):
     # We have to manually call "start" if we want an explicit bot token
-    # with actual user account - octocubic
+    # with actual user account - oc
     client = TelegramClient(config["session_name"], 
                             config["api_id"], 
                             config["api_hash"])
