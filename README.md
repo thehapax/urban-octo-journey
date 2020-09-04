@@ -1,4 +1,4 @@
-# telegram forwarder
+# telegram bot message forwarder
 forward messages from multiple Telegram channels or chats to one (or more) chat or channel of your own!
 
 ## Prerequisites
