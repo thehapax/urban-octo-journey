@@ -1,15 +1,32 @@
 from reader import make_reader, FeedExistsError
 import yaml
 
-def add_and_update_feed(feed_url):
+# basic methods for adding, update and getting rss feeds
+
+def add_and_update_feed(feed_url, reader):
     try:
         reader.add_feed(feed_url)
     except FeedExistsError:
         pass
     reader.update_feeds()
 
+# get latests that have not been read and post them 
+# after posting then mark as read
+def get_latest(reader):
+    entries = list(reader.get_entries(read=False))
+    result = []
+    for entry in entries:
+        print(entry)
+        msg = ""
+        msg = "<b>" + entry.title + "</b>\n\n" + entry.link + "\n"
+        #  + entry.summary + "\n" 
+        #reader.mark_as_unread(entry)
+        #reader.mark_as_read(entry)
+        result.append(msg)
+    return result
 
-def get_config():
+
+def get_rss_config():
     path  = "./"
     config_file = path + 'rss.yml'
     with open(config_file, 'rb') as f:
@@ -17,19 +34,8 @@ def get_config():
     return config
 
 
-def get_latest(reader):
-    entries = list(reader.get_entries(read=False))
-    result = ''
-    for entry in entries:
-        msg = "---------\n"
-        msg = msg + entry.title + "\n" + entry.link + "\n"
-    #    reader.mark_as_read(entry)
-        result = result + msg
-    return result
-
-
 if __name__ == "__main__":
-    config = get_config()
+    config = get_rss_config()
     feedlist = config["feedlist"]
     print(feedlist)
 
@@ -39,5 +45,7 @@ if __name__ == "__main__":
         feed = reader.get_feed(f)
         print(f"updated {feed.title} (last changed at {feed.updated})\n")
     
+    
+    # make this an hourly cron job
     result = get_latest(reader)
     print(result)

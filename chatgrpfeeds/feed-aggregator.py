@@ -4,6 +4,8 @@ import sys
 import logging
 from utils import split_sponsored
 
+# Telegram Channel Aggregator
+
 ### this script will consolidate multiple channels to one channel/group/user on telgram
 # source code examples from https://docs.telethon.dev/en/latest/basic/quick-start.html
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -56,7 +58,7 @@ def main(config):
 
     # Getting information about yourself
     me = client.get_me()
-    # print(me.stringify())
+    print(me.stringify())
     # username = me.username
     # print(username)
     # get_ids(client)  # prints out all IDs of chats and channels user is in.

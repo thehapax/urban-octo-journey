@@ -1,2 +1,7 @@
 db.sqlite
+config.yml
+rss.yml
 *~
+*.session
+env
+__pycache__
