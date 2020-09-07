@@ -1,8 +1,13 @@
 from reader import make_reader, FeedExistsError
+import calendar
+import datetime
+from datetime import date
+from dateutil import relativedelta
 import yaml
+from bs4 import BeautifulSoup
+import re
 
 # basic methods for adding, update and getting rss feeds
-
 def add_and_update_feed(feed_url, reader):
     try:
         reader.add_feed(feed_url)
@@ -10,20 +15,80 @@ def add_and_update_feed(feed_url, reader):
         pass
     reader.update_feeds()
 
+
+def next_month():
+    ''' returns next month and year in this format, if current month is
+        September 2020 (2020, 9): (2020, 10)
+    '''
+    # usage: 10 = nextmonth.month, 2020 = nextmonth.year
+    nextmonth = datetime.date.today() + relativedelta.relativedelta(months=1)
+    return nextmonth
+
+# if its a meetup rss feed
+# get the date and return it - word before and after the month. 
+# in between the <p></p>, e.g. <p>Tuesday, September 22 at 6:15 PM</p>
+def check_month(summary, month):    
+    soup = BeautifulSoup(summary, 'html.parser')
+    event_date = None
+    this_month = calendar.month_name[month]
+    short_month = calendar.month_abbr[month]
+    if (summary.__contains__(short_month)) or (summary.__contains__(this_month)):
+        #print("Short Month MATCH")  # check if there are "Sep"
+        for link in soup.find_all('p'):
+            link_string = str(link.string)
+            if (this_month in link_string) or (short_month in link_string):
+                event_date = link_string
+
+    if event_date is not None:
+        return event_date
+    else:
+        return False
+    
+
+def check_event_number(eventlink):
+    '''
+     as of Sept 2020, random meetup event number is 272799202
+     check to make sure that the current events numbers are greater
+     in case we have wrap around events from previous years. 
+    '''
+    if "meetup.com" in eventlink: 
+        match = re.findall('[0-9]+', eventlink)
+        if match:
+            eventnum = int(match[0])
+            if eventnum > 270700100:
+                print(str(eventnum) + " > min threshold")
+                return True
+            else:
+                # not sure this is the right way to handle issue
+                print(str(eventnum) + " < OBSOLETE or NULL? " + eventlink)
+                return False
+        
+
 # get latests that have not been read and post them 
 # after posting then mark as read
-def get_latest(reader):
+def get_latest(reader, current):
+    today = None
+    if current:
+        today = date.today()
+    else: 
+        today = next_month()
+    
     entries = list(reader.get_entries(read=False))
     result = []
+    
     for entry in entries:
-        print(entry)
-        msg = ""
-        msg = "<b>" + entry.title + "</b>\n\n" + entry.link + "\n"
-        #  + entry.summary + "\n" 
-        #reader.mark_as_unread(entry)
-        #reader.mark_as_read(entry)
-        result.append(msg)
+        #print(entry.summary)
+        currdate = check_month(entry.summary, today.month)
+        #eventdate = check_event_number(entry.link)
+        #if currdate and eventdate:
+        if currdate: 
+            msg = currdate + "\n"            
+            msg = msg + "<b>" + entry.title + "</b>\n" 
+            msg = msg + entry.link + "\n"
+            result.append(msg)
     return result
+    #reader.mark_as_unread(entry)
+    #reader.mark_as_read(entry)
 
 
 def get_rss_config():
@@ -34,6 +99,7 @@ def get_rss_config():
     return config
 
 
+'''
 if __name__ == "__main__":
     config = get_rss_config()
     feedlist = config["feedlist"]
@@ -49,3 +115,4 @@ if __name__ == "__main__":
     # make this an hourly cron job
     result = get_latest(reader)
     print(result)
+'''

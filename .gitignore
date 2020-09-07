@@ -5,3 +5,5 @@ rss.yml
 *.session
 env
 __pycache__
+archive
+.DS_Store

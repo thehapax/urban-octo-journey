@@ -9,7 +9,6 @@ from utils import split_sponsored, get_ids, get_inbound, get_name, get_myinfo
 from rss_utils import add_and_update_feed, get_latest
 
 # consolidate RSS feeds to a telegram chat group or channel
-
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logging.getLogger('telethon').setLevel(level=logging.WARNING)
 logger = logging.getLogger(__name__)
@@ -21,18 +20,14 @@ with open(config_file, 'rb') as f:
     config = yaml.safe_load(f)
         
 feedlist = config["feedlist"]
-print(feedlist)
+#print(feedlist)
 
 reader = make_reader("db.sqlite")
+# run on startup and as daily cron job to update feeds
 for f in feedlist: 
     add_and_update_feed(f, reader) 
     feed = reader.get_feed(f)
     print(f"updated {feed.title} (last changed at {feed.updated})\n")
-    
-# make this an hourly cron job
-result = get_latest(reader)
-#print("marking all old posts as read")
-#print(result)
 
 # We have to manually call "start" if we want an explicit bot token
 # with actual user account - oc
@@ -45,11 +40,15 @@ inbound_groups = get_inbound(config)
 
 ##### single outbound stream ######
 outbound = config['outbound']
-print(f'Outbound Feed: {outbound}')
+#print(f'Outbound Feed: {outbound}')
 client.parse_mode = 'html'
 client.start()
 
 # get_myinfo(client) # get your info for setting up config.yml
+this_month = True
+result = get_latest(reader, this_month)
+print(result)
+print(" END running get latest initial.... ")
 
 
 # listen to chat groups and forward messsages
@@ -63,8 +62,7 @@ async def msghandler(event):
         logger.info(inbound)
 
         inbound_message = "<b>" + username + "</b>\n\n"
-        body_msg = split_sponsored(
-            event.message.text)  # remove sponsored msg
+        body_msg = split_sponsored(event.message.text)  # remove sponsored msg
         inbound_message = inbound_message + body_msg
         if body_msg is not None:
             await client.send_message(outbound, inbound_message, parse_mode='html')
@@ -75,21 +73,29 @@ async def msghandler(event):
     except Exception as e:
         logger.error(e)
 
-# */2 is every 2nd minute, 30 is every hour at 30 min mark
+
 @aiocron.crontab('* * * * *') 
 async def poll_rssfeeds():
-    result = get_latest(reader)
+    this_month = False
+    result = get_latest(reader, this_month)
     print(" running rss feed cron job .... ")
     print(result)
-    
     if result is not None:
         for r in result: 
-            await client.send_message(outbound, r)
-    
+            await client.send_message(outbound, r,  link_preview=False)
+
+
+# run as daily cron job to update feeds
+# */2 is every 2nd minute, 30 is every hour at 30 min mark
+'''
+@aiocron.crontab('* * * * *') 
+async def update_feeds():
+    for f in feedlist: 
+        add_and_update_feed(f, reader) 
+        feed = reader.get_feed(f)
+        print(f"updated {feed.title} (last changed at {feed.updated})\n")
+'''
 
 ############
-    
-
-#client.add_event_handler(msghandler)
 client.run_until_disconnected()
 
