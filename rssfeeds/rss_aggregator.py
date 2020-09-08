@@ -7,6 +7,7 @@ import asyncio
 from reader import make_reader, FeedExistsError
 from utils import split_sponsored, get_ids, get_inbound, get_name, get_myinfo
 from rss_utils import add_and_update_feed, get_latest
+import pandas as pd    
 
 # consolidate RSS feeds to a telegram chat group or channel
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -19,16 +20,6 @@ config_file = path + 'rss.yml'
 with open(config_file, 'rb') as f:
     config = yaml.safe_load(f)
         
-feedlist = config["feedlist"]
-#print(feedlist)
-
-reader = make_reader("db.sqlite")
-# run on startup and as daily cron job to update feeds
-for f in feedlist: 
-    add_and_update_feed(f, reader) 
-    feed = reader.get_feed(f)
-    print(f"updated {feed.title} (last changed at {feed.updated})\n")
-
 # We have to manually call "start" if we want an explicit bot token
 # with actual user account - oc
 client = TelegramClient(config["session_name"], 
@@ -43,6 +34,18 @@ outbound = config['outbound']
 #print(f'Outbound Feed: {outbound}')
 client.parse_mode = 'html'
 client.start()
+
+feedlist = config["feedlist"]
+#print(feedlist)
+
+reader = make_reader("db.sqlite")
+# run on startup and as daily cron job to update feeds
+'''
+for f in feedlist: 
+    add_and_update_feed(f, reader) 
+    feed = reader.get_feed(f)
+    print(f"updated {feed.title} (last changed at {feed.updated})\n")
+'''
 
 # get_myinfo(client) # get your info for setting up config.yml
 this_month = True
@@ -76,25 +79,23 @@ async def msghandler(event):
 
 @aiocron.crontab('* * * * *') 
 async def poll_rssfeeds():
-    this_month = False
+    this_month = True
     result = get_latest(reader, this_month)
     print(" running rss feed cron job .... ")
-    print(result)
-    if result is not None:
-        for r in result: 
-            await client.send_message(outbound, r,  link_preview=False)
-
+    for index, r in result.iterrows():
+        entry = r['FullDate'] + "\n" + r['EventName'] + "\n" + r['Link'] + "\n\n"
+        await client.send_message(outbound, entry,  link_preview=False)
+    
 
 # run as daily cron job to update feeds
 # */2 is every 2nd minute, 30 is every hour at 30 min mark
-'''
-@aiocron.crontab('* * * * *') 
+@aiocron.crontab('0 0 * * *') 
 async def update_feeds():
     for f in feedlist: 
         add_and_update_feed(f, reader) 
         feed = reader.get_feed(f)
         print(f"updated {feed.title} (last changed at {feed.updated})\n")
-'''
+        
 
 ############
 client.run_until_disconnected()

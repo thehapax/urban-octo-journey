@@ -6,6 +6,7 @@ from dateutil import relativedelta
 import yaml
 from bs4 import BeautifulSoup
 import re
+import pandas as pd
 
 # basic methods for adding, update and getting rss feeds
 def add_and_update_feed(feed_url, reader):
@@ -73,21 +74,25 @@ def get_latest(reader, current):
     else: 
         today = next_month()
     
-    entries = list(reader.get_entries(read=False))
-    result = []
+    entries = list(reader.get_entries(read=False))    
+    rows = []
     
     for entry in entries:
         #print(entry.summary)
         currdate = check_month(entry.summary, today.month)
         #eventdate = check_event_number(entry.link)
         #if currdate and eventdate:
-        if currdate: 
-            msg = currdate + "\n"            
-            msg = msg + "<b>" + entry.title + "</b>\n" 
-            msg = msg + entry.link + "\n"
-            result.append(msg)
+        this_month = calendar.month_name[today.month]
+        if currdate:
+            edate = currdate.split('at')[0]
+            shortdate = int(edate.split(this_month)[1])
+            row = (shortdate, edate, entry.title, entry.link)
+            rows.append(row)
+    frame = pd.DataFrame(rows, columns=['ShortDate', 'FullDate', 'EventName', 'Link'])
+    result = frame.sort_values(by='ShortDate', ascending=True)
+    print(result)
     return result
-    #reader.mark_as_unread(entry)
+
     #reader.mark_as_read(entry)
 
 
@@ -110,8 +115,7 @@ if __name__ == "__main__":
         add_and_update_feed(f) 
         feed = reader.get_feed(f)
         print(f"updated {feed.title} (last changed at {feed.updated})\n")
-    
-    
+
     # make this an hourly cron job
     result = get_latest(reader)
     print(result)
